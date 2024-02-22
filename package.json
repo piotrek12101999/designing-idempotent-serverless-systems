@@ -1,0 +1,31 @@
+{
+  "name": "designing-idempotent-serverless-systems",
+  "version": "1.0.0",
+  "description": "Learn how to create RESTful API using Lambda, API Gateway and DynamoDB. Streamline your workflow and build scalable solutions in the cloud with our step-by-step guide.",
+  "scripts": {
+    "deploy:test": "sls deploy --stage=dev",
+    "deploy:prod": "sls deploy --stage=prod"
+  },
+  "keywords": [],
+  "author": "Piotr Swiatek",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-lambda-powertools/idempotency": "^1.18.1",
+    "@aws-sdk/client-dynamodb": "^3.515.0",
+    "@aws-sdk/client-sqs": "^3.515.0",
+    "@aws-sdk/lib-dynamodb": "^3.515.0",
+    "joi": "^17.12.1",
+    "typescript": "^5.3.3",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.133",
+    "@types/uuid": "^9.0.8",
+    "fork-ts-checker-webpack-plugin": "^9.0.2",
+    "serverless": "^3.38.0",
+    "serverless-iam-roles-per-function": "^3.2.0",
+    "serverless-webpack": "^5.13.0",
+    "ts-loader": "^9.5.1",
+    "webpack": "^5.90.2"
+  }
+}

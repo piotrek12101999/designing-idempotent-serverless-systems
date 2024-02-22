@@ -1,0 +1,80 @@
+placeBooking:
+  handler: src/functions/placeBooking/placeBooking.handler
+  environment:
+    BOOKING_TABLE: !Ref BookingTable
+    IDEMPOTENCY_TABLE: !Ref IdempotencyTable
+  events:
+    - http:
+        path: bookings
+        method: POST
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: !GetAtt IdempotencyTable.Arn
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+      Resource: !GetAtt BookingTable.Arn
+getBooking:
+  handler: src/functions/getBooking/getBooking.handler
+  environment:
+    BOOKING_TABLE: !Ref BookingTable
+  events:
+    - http:
+        path: bookings/{id}
+        method: GET
+        request:
+          parameters:
+            paths:
+              id: true
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+      Resource: !GetAtt BookingTable.Arn
+acceptBooking:
+  handler: src/functions/acceptBooking/acceptBooking.handler
+  environment:
+    BOOKING_TABLE: !Ref BookingTable
+    QUEUE_URL: !Ref PaymentProcessingQueue
+  events:
+    - http:
+        path: bookings/{id}/accept
+        method: PUT
+        request:
+          parameters:
+            paths:
+              id: true
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:UpdateItem
+      Resource: !GetAtt BookingTable.Arn
+    - Effect: Allow
+      Action: sqs:SendMessage
+      Resource: !GetAtt PaymentProcessingQueue.Arn
+processPayment:
+  handler: src/functions/processPayment/processPayment.handler
+  environment:
+    BOOKING_TABLE: !Ref BookingTable
+    IDEMPOTENCY_TABLE: !Ref IdempotencyTable
+  events:
+    - sqs:
+        arn: !GetAtt PaymentProcessingQueue.Arn
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: !GetAtt IdempotencyTable.Arn
+    - Effect: Allow
+      Action:
+        - dynamodb:UpdateItem
+      Resource: !GetAtt BookingTable.Arn
