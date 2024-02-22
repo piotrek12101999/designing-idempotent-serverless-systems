@@ -21,7 +21,8 @@ const processingFunction = async ({ id }: PaymentToBeProcessedMessage) => {
   // Here goes 3rd party payment API service call
   const paymentProcessedSuccessfully = true; // await paymentService.process(record)
 
-  console.log("CHARGING CUSTOMER HERE");
+  // console.log("Charging customer");
+
   await bookingRepository.updateStatus(
     id,
     paymentProcessedSuccessfully ? "CONFIRMED" : "PAYMENT_DECLINED"
