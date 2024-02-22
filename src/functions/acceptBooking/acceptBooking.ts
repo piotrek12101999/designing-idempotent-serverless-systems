@@ -13,14 +13,12 @@ const messageQueue: MessageQueue = new SQSMessageQueue();
 export const handler: APIGatewayProxyHandler = httpMiddleware(async (event) => {
   const id = getIdFromPathParams(event);
 
-  // Here we also check if booking exists, if not findById will throw 404 error
+  // Checking if booking exists, if not findById will throw 404 error
   const { amount } = await bookingRepository.findById(id);
 
   try {
     await bookingRepository.updateStatus(id, "ACCEPTED");
 
-    // Here we by accident publish two identical messages
-    await messageQueue.publishMessage({ id, amount });
     return messageQueue.publishMessage({ id, amount });
   } catch (err) {
     // Reverting to initial state in case of error

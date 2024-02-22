@@ -6,9 +6,9 @@ import {
   IdempotencyConfig,
   makeIdempotent,
 } from "@aws-lambda-powertools/idempotency";
-import { PaymentToBeProcessedMessage } from "../../models/PaymentToBeProcessedMessage";
 import { BookingRepository } from "../../database/types/BookingRepository";
 import { DynamoBookingRepository } from "../../database/DynamoBookingRepository/DynamoBookingRepository";
+import { PaymentToBeProcessedMessage } from "../../queue/types/PaymentToBeProcessedMessage";
 
 const persistenceStore: BasePersistenceLayer = new DynamoDBPersistenceLayer({
   tableName: checkForEnv(process.env.IDEMPOTENCY_TABLE),
@@ -17,24 +17,23 @@ const config = new IdempotencyConfig({});
 
 const bookingRepository: BookingRepository = new DynamoBookingRepository();
 
-const handleBookingPayment = makeIdempotent(
-  async ({ id }: PaymentToBeProcessedMessage) => {
-    // Here goes 3rd party payment API service call
-    const paymentProcessedSuccessfully = true; // await paymentService.process(record)
+const processingFunction = async ({ id }: PaymentToBeProcessedMessage) => {
+  // Here goes 3rd party payment API service call
+  const paymentProcessedSuccessfully = true; // await paymentService.process(record)
 
-    console.log("CHARGING CUSTOMER HERE");
-    await bookingRepository.updateStatus(
-      id,
-      paymentProcessedSuccessfully ? "CONFIRMED" : "PAYMENT_DECLINED"
-    );
+  console.log("CHARGING CUSTOMER HERE");
+  await bookingRepository.updateStatus(
+    id,
+    paymentProcessedSuccessfully ? "CONFIRMED" : "PAYMENT_DECLINED"
+  );
 
-    return paymentProcessedSuccessfully;
-  },
-  {
-    persistenceStore,
-    config,
-  }
-);
+  return paymentProcessedSuccessfully;
+};
+
+const handleBookingPayment = makeIdempotent(processingFunction, {
+  persistenceStore,
+  config,
+});
 
 export const handler: SQSHandler = async (event, context) => {
   config.registerLambdaContext(context);

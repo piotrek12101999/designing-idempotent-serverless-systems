@@ -2,24 +2,18 @@ import {
   IdempotencyConfig,
   makeIdempotent,
 } from "@aws-lambda-powertools/idempotency";
-import { DynamoDBPersistenceLayer } from "@aws-lambda-powertools/idempotency/dynamodb";
-import { BasePersistenceLayer } from "@aws-lambda-powertools/idempotency/persistence";
 import type { APIGatewayProxyHandler, APIGatewayProxyEvent } from "aws-lambda";
 import { v4 as uuid } from "uuid";
 import { BookingRepository } from "../../database/types/BookingRepository";
 import { DynamoBookingRepository } from "../../database/DynamoBookingRepository/DynamoBookingRepository";
 import { Booking } from "../../models/Booking";
 import { schema } from "./schema";
-import { checkForEnv } from "../../utils/checkForEnv";
 import { BadRequestException } from "../../exceptions/BadRequestException/BadRequestException";
 import { httpMiddleware } from "../../utils/httpMiddleware";
 import { HttpStatus } from "../../utils/HttpStatus";
+import { persistenceStore } from "../../database/DynamoPersistenceStore/DynamoPersistenceStore";
 
 interface PartialBooking extends Omit<Booking, "id" | "status"> {}
-
-const persistenceStore: BasePersistenceLayer = new DynamoDBPersistenceLayer({
-  tableName: checkForEnv(process.env.IDEMPOTENCY_TABLE),
-});
 
 const config = new IdempotencyConfig({
   eventKeyJmesPath: 'headers."X-Idempotency-Key"',
@@ -51,7 +45,7 @@ const processingFunction = async ({ body }: APIGatewayProxyEvent) => {
   return id;
 };
 
-const processIdempotently = makeIdempotent(processingFunction, {
+const placeBooking = makeIdempotent(processingFunction, {
   persistenceStore,
   config,
 });
@@ -64,7 +58,7 @@ export const handler: APIGatewayProxyHandler = httpMiddleware(
 
     config.registerLambdaContext(context);
 
-    return processIdempotently(event);
+    return placeBooking(event);
   },
   {
     successCode: HttpStatus.CREATED,
