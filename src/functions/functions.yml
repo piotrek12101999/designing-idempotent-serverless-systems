@@ -58,8 +58,8 @@ acceptBooking:
     - Effect: Allow
       Action: sqs:SendMessage
       Resource: !GetAtt PaymentProcessingQueue.Arn
-processPayment:
-  handler: src/functions/processPayment/processPayment.handler
+paymentProcessor:
+  handler: src/functions/paymentProcessor/paymentProcessor.handler
   environment:
     BOOKING_TABLE: !Ref BookingTable
     IDEMPOTENCY_TABLE: !Ref IdempotencyTable
