@@ -1,7 +1,5 @@
-import { DynamoDBPersistenceLayer } from "@aws-lambda-powertools/idempotency/dynamodb";
-import { BasePersistenceLayer } from "@aws-lambda-powertools/idempotency/persistence";
 import { SQSHandler } from "aws-lambda";
-import { checkForEnv } from "../../utils/checkForEnv";
+import { persistenceStore } from "../../database/DynamoPersistenceStore/DynamoPersistenceStore";
 import {
   IdempotencyConfig,
   makeIdempotent,
@@ -10,9 +8,6 @@ import { BookingRepository } from "../../database/types/BookingRepository";
 import { DynamoBookingRepository } from "../../database/DynamoBookingRepository/DynamoBookingRepository";
 import { PaymentToBeProcessedMessage } from "../../queue/types/PaymentToBeProcessedMessage";
 
-const persistenceStore: BasePersistenceLayer = new DynamoDBPersistenceLayer({
-  tableName: checkForEnv(process.env.IDEMPOTENCY_TABLE),
-});
 const config = new IdempotencyConfig({});
 
 const bookingRepository: BookingRepository = new DynamoBookingRepository();
